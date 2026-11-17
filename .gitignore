@@ -13,3 +13,10 @@ s1_0.zip
 
 # Build output
 MyoElektra/build/
+
+# Local-only: older exploration that is not part of this repo
+emg-pipeline/
+opencode.json
+tools/*
+!tools/key_emg.py
+!tools/demo.fish
