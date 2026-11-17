@@ -1,0 +1,8 @@
+# sensor-lab viewer — pinned direct deps (checked 2026-11-09, Python 3.14)
+# pyserial 3.5: latest PyPI release (2020-11-23), pure Python, BSD-3.
+#   Verified: https://pypi.org/pypi/pyserial/json  (sha256 of wheel
+#   07bc587a445451b253b285629263eb51c2d8e9bcea4fc97826266d186f96f558)
+# matplotlib 3.11.2: same pin as ../emg-pipeline (already working on py3.14 here).
+# Install: python3 -m venv .venv && .venv/bin/pip install -r tools/requirements.txt
+pyserial==3.5
+matplotlib==3.11.2

@@ -1,0 +1,36 @@
+{
+  "note": [
+    "Single source of truth: where the 12 DB3 electrode spots sit on the model",
+    "and which muscle each is associated with. Ring 1-8 are POSITIONS only",
+    "(the DB3 paper assigns no muscle to them, and their numbering/anatomical",
+    "start point is not documented - azimuths here are a convention, editable).",
+    "Positions live in the normalized arm space the frontend builds:",
+    "y = 0 at the radio-humeral (elbow) joint line, y = 1 at the wrist;",
+    "x = radial(+) / ulnar(-); z = dorsal(+) / volar(-); units = forearm lengths.",
+    "pos = {az: azimuth deg (0 radial, 90 volar, 180 ulnar, 270 dorsal), y: height}."
+  ],
+  "channels": [
+    { "ch": 1,  "label": "ring 1",         "muscle": null, "pos": { "az": 0,   "y": 0.05 } },
+    { "ch": 2,  "label": "ring 2",         "muscle": null, "pos": { "az": 45,  "y": 0.05 } },
+    { "ch": 3,  "label": "ring 3",         "muscle": null, "pos": { "az": 90,  "y": 0.05 } },
+    { "ch": 4,  "label": "ring 4",         "muscle": null, "pos": { "az": 135, "y": 0.05 } },
+    { "ch": 5,  "label": "ring 5",         "muscle": null, "pos": { "az": 180, "y": 0.05 } },
+    { "ch": 6,  "label": "ring 6",         "muscle": null, "pos": { "az": 225, "y": 0.05 } },
+    { "ch": 7,  "label": "ring 7",         "muscle": null, "pos": { "az": 270, "y": 0.05 } },
+    { "ch": 8,  "label": "ring 8",         "muscle": null, "pos": { "az": 315, "y": 0.05 } },
+    { "ch": 9,  "label": "FDS flexor dig", "muscle": "FDS", "pos": { "az": 270, "y": 0.27 } },
+    { "ch": 10, "label": "EDS ext dig",    "muscle": "EDS", "pos": { "az": 90,  "y": 0.26 } },
+    { "ch": 11, "label": "biceps",         "muscle": "BIC", "pos": { "az": 270, "y": -0.24 } },
+    { "ch": 12, "label": "triceps",        "muscle": "TRI", "pos": { "az": 90,  "y": -0.24 } }
+  ],
+  "muscles": {
+    "FDS": { "full": "flexor digitorum superficialis", "color": "#e5484d",
+             "capsule": { "from": [0, 0.10, 0.066], "to": [0, 0.45, 0.002], "r": 0.045 } },
+    "EDS": { "full": "extensor digitorum superficialis", "color": "#46a758",
+             "capsule": { "from": [0, 0.10, -0.120], "to": [0, 0.40, -0.078], "r": 0.045 } },
+    "BIC": { "full": "biceps brachii", "color": "#f5a524",
+             "capsule": { "from": [0, -0.42, 0.058], "to": [0, -0.06, 0.040], "r": 0.055 } },
+    "TRI": { "full": "triceps brachii", "color": "#3e7bfa",
+             "capsule": { "from": [0, -0.42, -0.110], "to": [0, -0.06, -0.070], "r": 0.055 } }
+  }
+}

@@ -1,0 +1,10 @@
+# Python
+.venv/
+__pycache__/
+
+# captured data (large; promote selectively by hand)
+captures/*.csv
+captures/*.npy
+
+# arduino-cli build output
+sketch/*/build/

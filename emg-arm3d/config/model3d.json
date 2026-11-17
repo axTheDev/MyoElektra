@@ -1,0 +1,42 @@
+{
+  "note": [
+    "Anatomical mesh swap-in (see ../models/NOTICE.md for provenance/license).",
+    "fit.spanY maps the model's Y bounding box onto the normalized arm span",
+    "(y=0 elbow line, y=1 wrist). rig = manual alignment, tuned in-browser with",
+    "?rig=1 (sliders + copy-config button; live tweaks persist to localStorage).",
+    "clipAboveY deletes model triangles above that normalized height (hide the",
+    "model's static hand so the procedural posing hand stays). frontOpacity",
+    "is the ghost layer: back faces render opaque, front faces translucent."
+  ],
+  "enabled": true,
+  "url": "/models/anatomy_-_male_arm.glb",
+  "fit": {
+    "spanY": [
+      -0.4,
+      1.03
+    ]
+  },
+  "rig": {
+    "rx": -180,
+    "ry": -87,
+    "rz": -8,
+    "tx": 0.032,
+    "ty": 0.038,
+    "tz": 0.032,
+    "extraScale": 1.605
+  },
+  "pivotY": -0.08,
+  "stretchY": 1,
+  "handScale": 1.7,
+  "handX": 0.01,
+  "handY": 0.6,
+  "handZ": -0.09,
+  "handRotY": 180,
+  "senX": 0.009,
+  "senY": 0,
+  "senZ": -0.005,
+  "clipAboveY": 0.63,
+  "clipBelowY": -0.8,
+  "frontOpacity": 1,
+  "showProceduralArm": false
+}

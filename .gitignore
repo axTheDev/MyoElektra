@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.ruff_cache/
+
+# MATLAB
+*.asv
+
+# Datasets (large, re-downloadable from ninapro.hevs.ch)
+Nina Dataset/
+s1_0.zip
+
+# Build output
+MyoElektra/build/

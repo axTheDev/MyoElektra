@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MyoArm3D</title>
+  <script type="importmap">{"imports": { "three": "./vendor/three-0.187.0/three.module.js" }}</script>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>MyoArm3D <span id="session-tag"></span></h1>
+    <nav id="modebtns">
+      <button id="m-3d" class="sel">3D view</button>
+      <button id="m-bench" title="live / replay scope for sensor-lab">bench</button>
+    </nav>
+    <span id="status">loading…</span>
+  </header>
+  <main id="main-3d">
+    <aside id="col-left">
+      <select id="dataset" title="dataset"></select>
+      <div class="coltitle">gestures</div>
+      <div id="glist"></div>
+      <div class="card row">
+        <select id="rep" title="repetition"></select>
+        <button id="play">▶ play</button>
+      </div>
+      <div id="gdesc"></div>
+      <div class="coltitle">my sensor</div>
+      <div class="card">
+        <div class="row">
+          <button class="tb" id="pin-place" title="then click the spot on the 3D arm where the sensor sits">📍 place on arm</button>
+          <button class="tb" id="pin-clear" title="remove my sensor pin">✕</button>
+        </div>
+        <div id="pin-info" class="dim small">no pin yet</div>
+      </div>
+      <div class="coltitle">my captures</div>
+      <div id="caplist"></div>
+    </aside>
+    <section id="view3d">
+      <canvas id="arm-canvas"></canvas>
+      <div id="hint">drag&nbsp;=&nbsp;orbit &nbsp;·&nbsp; scroll&nbsp;=&nbsp;zoom &nbsp;·&nbsp; click a marker&nbsp;=&nbsp;DB3 channel &nbsp;·&nbsp; pink pin&nbsp;=&nbsp;my capture &nbsp;·&nbsp; white pin&nbsp;=&nbsp;my sensor now</div>
+    </section>
+    <aside id="panel">
+      <div class="coltitle">sensors<button class="xbtn" id="all-inspect" title="every sensor graph for the chosen gesture">show all graphs</button></div>
+      <div id="chips"></div>
+      <div id="chaninfo"></div>
+      <div class="card" id="cmp-card" hidden>
+        <div class="cardtitle"><span id="cmp-title">compare</span><button class="xbtn" id="cmp-mode" title="× floor = multiples of each sensor's rest floor · % peak = shape only">scale</button><button class="xbtn nopush" id="cmp-inspect" title="big interactive view">⤢ big view</button></div>
+        <canvas id="cmp-chart"></canvas>
+        <div class="rowlabels"><span id="cmp-note"></span></div>
+        <div class="rowlabels"><span class="dim">blue = DB3 reps · warm = my trials · x 0 = onset (DB3 label / my mark) · change channel or gesture to compare against others</span></div>
+      </div>
+      <div class="card" id="cap-card" hidden>
+        <div class="cardtitle"><span id="cap-title">my capture</span></div>
+        <canvas id="cap-chart"></canvas>
+        <div class="rowlabels"><span id="cap-note"></span></div>
+        <div class="row wrap">
+          <button class="tb" id="cap-tag-g" title="tag this capture with the gesture selected on the left">gesture ← selected</button>
+          <button class="tb" id="cap-tag-p" title="tag this capture with the white 'my sensor' pin">pin ← my sensor</button>
+          <input id="cap-floor" type="number" min="0" step="any" placeholder="floor" title="rest floor in the capture's own units, if the firmware didn't send one">
+        </div>
+      </div>
+      <div class="card">
+        <div class="cardtitle" id="env-title">session envelope</div>
+        <canvas id="env-chart"></canvas>
+      </div>
+      <div class="card">
+        <div class="cardtitle"><span id="seg-title">segment</span><button class="xbtn" id="seg-inspect" title="big interactive view">⤢ big view</button></div>
+        <canvas id="raw-chart"></canvas>
+        <canvas id="rect-chart"></canvas>
+        <canvas id="senv-chart"></canvas>
+        <div class="rowlabels">
+          <span>raw mV</span><span>|x| mV</span><span>env mV</span><span class="dim">shaded = labelled trial (restimulus)</span>
+        </div>
+      </div>
+      <div class="card">
+        <div class="cardtitle"><span id="reps-title">all reps</span><button class="xbtn" id="reps-inspect" title="all reps big">⤢ big view</button></div>
+        <canvas id="reps-chart"></canvas>
+        <div class="rowlabels"><span id="reps-note"></span></div>
+      </div>
+    </aside>
+  </main>
+  <main id="main-bench" hidden>
+    <aside id="bench-side">
+      <div class="coltitle">source</div>
+      <div class="card">
+        <select id="live-src" title="stream source"></select>
+        <div class="row" style="margin-top:6px">
+          <button id="live-start">▶ start</button>
+          <button id="live-stop">■ stop</button>
+        </div>
+        <label class="dim" style="font-size:10.5px;display:block;margin-top:6px">
+          <input type="checkbox" id="live-loop" checked> loop replay</label>
+        <input id="rec-name" placeholder="capture name (what_state)">
+        <input id="rec-note" placeholder="note → meta.json">
+        <select id="rec-gesture" title="which DB3 gesture you are about to perform" style="margin-top:6px"></select>
+        <div id="rec-pin" class="dim small" title="set with 'place on arm' in the 3D view">📍 no pin</div>
+        <div class="row" style="margin-top:6px">
+          <button id="rec-btn">⏺ record</button>
+          <button id="mark-btn" hidden title="also: Space">⚑ trial</button>
+        </div>
+        <div id="live-status" class="dim" style="font-size:10.5px;margin-top:6px">idle</div>
+      </div>
+      <div class="coltitle">lanes</div>
+      <div class="card" id="lane-opts"><span class="dim">start a source to detect lanes</span></div>
+      <div class="coltitle">scope</div>
+      <div class="card">
+        <div class="row">
+          <label class="dim" for="scope-win">window</label>
+          <select id="scope-win">
+            <option value="2">2 s</option>
+            <option value="5" selected>5 s</option>
+            <option value="10">10 s</option>
+            <option value="30">30 s</option>
+          </select>
+          <button id="scope-freeze">freeze</button>
+        </div>
+        <div class="dim" style="font-size:10px;margin-top:5px">each lane autoscales to its visible window · the sketch computes everything, this only draws</div>
+      </div>
+    </aside>
+    <div id="scope"></div>
+  </main>
+  <div id="inspect" hidden>
+    <div id="inspect-bar">
+      <span id="inspect-title"></span>
+      <button data-m="seg">trial</button>
+      <button data-m="reps">all reps</button>
+      <button data-m="all">all sensors</button>
+      <button data-m="cmp">mine vs DB3</button>
+      <button id="im-toggle" hidden>reps overlaid</button>
+      <span id="focus-chips" hidden></span>
+      <button id="inspect-close">✕ close</button>
+    </div>
+    <div id="inspect-body">
+      <div id="inspect-trial">
+        <canvas id="i-raw"></canvas>
+        <canvas id="i-rect"></canvas>
+        <canvas id="i-env"></canvas>
+      </div>
+      <div id="inspect-reps" hidden><canvas id="i-reps"></canvas></div>
+      <div id="inspect-cmp" hidden><canvas id="i-cmp"></canvas></div>
+      <div id="inspect-focus" hidden><canvas id="i-focus"></canvas></div>
+      <div id="inspect-grid" hidden></div>
+    </div>
+    <div id="inspect-hint">wheel = zoom · drag = pan time · esc = close — raw / |x| / envelope share the time window</div>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

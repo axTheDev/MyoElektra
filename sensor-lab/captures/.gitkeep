@@ -1,0 +1,1 @@
+# keep captures/ in git; data files (*.csv) are gitignored
