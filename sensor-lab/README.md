@@ -59,7 +59,7 @@ line, matching the `MyoElektra` convention.
 
 ## Build & flash (firmware)
 
-From `~/Documents/Capstone/code`:
+From the repo root (one level up from this folder):
 
 ```fish
 arduino-cli compile --upload -p usb7/7-1 --fqbn teensy:avr:teensy41 sensor-lab/sketch/sensor_read

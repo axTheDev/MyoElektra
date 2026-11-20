@@ -17,7 +17,7 @@ Each folder has its own README. The rest of this page is about the gamepad firmw
 arduino-cli compile --upload -p usb5/5-1 --fqbn teensy:avr:teensy41:usb=serialhid MyoElektra
 ```
 
-Run it from `~/Documents/Capstone/code`. `usb=serialhid` ("Serial + Keyboard + Mouse +
+Run it from the repo root (the folder holding this file). `usb=serialhid` ("Serial + Keyboard + Mouse +
 Joystick") is required, otherwise `Joystick` doesn't exist and the build fails. If the
 port changes after a replug, check `arduino-cli board list` and swap in the new name.
 

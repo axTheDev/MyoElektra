@@ -1,17 +1,17 @@
-// sensor_read — SEN0240 live bring-up sketch (sensor-lab M0 skeleton)
+// sensor_read — SEN0240 live bring-up sketch
 //
-// Contract with the host (see ../../README.md and ../../PIPELINE.md):
-//   one line per 1 kHz sample:  raw,corr,env,flex\n
-//   raw  = ADC counts 0-4095 (12-bit, 0-3.3 V)          [stage S1]
-//   corr = raw - moving baseline (counts)               [stage S2]
-//   env  = 100 ms RMS of rectified corr, scaled x1000   [stage S3]
-//   flex = env above threshold                          [stage S4]
+// What it does, in order:
+//   1. read the sensor 1000 times a second               (raw, 0-4095 counts)
+//   2. every 100 readings: p2p = highest - lowest        (the "env" graph)
+//   3. work out the resting level of p2p                 (the "floor" graph)
+//   4. decide flex or no flex                            (the "flex" graph)
+//   5. print one line:  env,floor,flex\n                 (10 lines a second)
 //
-// Build (from ~/Documents/Capstone/code):
-//   arduino-cli compile --upload -p usb5/5-1 --fqbn teensy:avr:teensy41 sensor-lab/sketch/sensor_read
+// At startup: keep the arm relaxed for 2 seconds. The first 20 windows are
+// used to measure the resting level. Until that is done the floor prints as 0.
 //
-// M1: fill in S1 — analogReadResolution(12), read A0 on a 1 kHz elapsedMicros
-//     tick, print "raw,0,0,0" for now. Everything else is M2+.
+// Build (from the repo root; find the port with: arduino-cli board list):
+//   arduino-cli compile --upload -p <port> --fqbn teensy:avr:teensy41 sensor-lab/sketch/sensor_read
 
 #include <Arduino.h>
 
@@ -23,18 +23,16 @@ elapsedMicros since_last_sample; // timer
 
 void setup() {
   Serial.begin(115200);   // nominal only; Teensy CDC throughput is much higher
-  // TODO(M1): analogReadResolution(12); pin config if any; a startup banner
-  //           line (e.g. "# sensor_read M1") so the viewer can skip junk.
-  analogReadResolution(12);
+  analogReadResolution(12);   // readings go from 0 to 4095
 
-  Serial.printf( " Reading pin data: %d", analogRead(SENSOR_PIN));
-  const rest = calibrate
+  // startup line. It starts with "#" so the app treats it as a comment, not as data.
+  Serial.printf("# sensor_read started. first reading: %d\n", analogRead(SENSOR_PIN));
 }
 
 // ── stage chain (each fn = one PIPELINE.md row) ─────────────────
 //  loop → raw ──► window() ──p2p──► floor_update() ──floor──► flex_decide() ──► emit()
 
-int window(int raw) {           // was better(): pure window mechanic.
+int window(int raw) {           // the min/max (p2p) window. was called better() before.
   // min/max/n bookkeeping stays here
   // returns: 0 until the 100th sample, then the p2p value (one call = one answer)
   lo = min(lo, raw);
@@ -56,7 +54,10 @@ int floor_update(int p2p) {     // calibration + drift live together (they're th
 
     static int calib[20];
     static int counter = 0;
-    int float floor = 0 // not calibrated yet
+    // static = the value is remembered between calls (without it, it would be 0 again every call).
+    // float  = it can hold 184.7, so the small /64 steps below are not rounded away.
+    // the name is rest_floor, not floor, because floor() is already a math function.
+    static float rest_floor = 0; // 0 means: not calibrated yet
 
     if (counter < 20){
         calib[counter++] = p2p;
@@ -71,35 +72,41 @@ int floor_update(int p2p) {     // calibration + drift live together (they're th
                 }
                 calib[j] = current;          // drop it into the hole where walking stopped
             }
-            floor = calib[10] // get midle value
-            if (floor < 50) floor = 50;
-            if (floor > 3000) floor = 3000;
-            Serial.printf("# floor=%d\n", (int)floor);
+            rest_floor = calib[10]; // get midle value
+            if (rest_floor < 50) rest_floor = 50;
+            if (rest_floor > 3000) rest_floor = 3000;
+            Serial.printf("# floor=%d\n", (int)rest_floor);
         }
-        return floor
+        return (int)rest_floor;   // still 0 for the first 19 windows
     }
-    if (p2p < 2 * floor){
-        floor =+ (p2p - floor) / 64.0;
+    if (p2p < 2 * rest_floor){
+        rest_floor += (p2p - rest_floor) / 64.0;   // += : move 1/64 of the way toward p2p
     }
-    return floor;
+    return (int)rest_floor;
 }
 
 
 
 
-
-
-bool flex_decide(int p2p, int floor) {
+bool flex_decide(int p2p, int rest_floor) {
   // hysteresis 2.5×/1.5× + 3-window confirm (its own little state)
   // returns: flex true/false
+  if (p2p > 2.5 * rest_floor && rest_floor != 0){
+      return true;
+  } else {
+      return false;
+  }
 }
 
-void emit(int p2p, int floor, bool flex) {
+void emit(int p2p, int rest_floor, bool flex) {
   // the ONLY place serial printing of data happens
+  // one line per window:  env,floor,flex     example: 412,185,0
+  Serial.printf("%d,%d,%d\n", p2p, rest_floor, flex);
 }
 
 void loop() {                   // the tick; knows nothing about signal processing
-  if (tick) {
+  if (since_last_sample >= 1000) {          // 1000 microseconds passed = time for one reading (1 kHz)
+    since_last_sample -= 1000;
     int raw = analogRead(SENSOR_PIN);
     int p2p = window(raw);
     if (p2p > 0) {                          // window completed — a real 100 ms moment
@@ -107,52 +114,5 @@ void loop() {                   // the tick; knows nothing about signal processi
       bool fx = flex_decide(p2p, fl);
       emit(p2p, fl, fx);
     }
-  }
-}
-
-
-
-
-
-
-void better(int value){
-    lo = min(lo, value);
-    hi = max(hi, value);
-    if (++n == 100) {
-      Serial.printf("%d\n", hi - lo);
-      lo = 4095; hi = 0; n = 0;
-    }
-}
-
-
-void remove_dc(int rest){
-    corr = raw - rest
-    Serial.printf("%d\n", corr);
-}
-
-int initial_calibrate(){
-    // measure resting value over 60 seconds
-    // set value globally
-    for ()
-
-    Serial.printf("%d is the resting value\n", rest);
-    return rest
-}
-
-int correct_drift(){
-// baseline value drifts with skin stuff
-// correct the drift with time-domain splitting
-//
-
-}
-
-
-
-void loop() {
-  if (since_last_sample >= 1000) {
-    since_last_sample -= 1000;
-    int value = analogRead(SENSOR_PIN);
-    // better(value);
-    Serial.print("%d", value);
   }
 }
